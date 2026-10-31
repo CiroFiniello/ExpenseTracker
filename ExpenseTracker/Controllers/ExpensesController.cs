@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ExpenseTracker.Models;
+using ExpenseTracker.ViewModels;
 using ExpenseTracker.Data;
 
 public class ExpensesController : Controller
@@ -40,7 +41,12 @@ public class ExpensesController : Controller
     // GET: EXPENSES/Create
     public IActionResult Create()
     {
-        return View();
+        var model = new CreateExpenseViewModel
+        {
+            OccurredOn = DateOnly.FromDateTime(DateTime.Today)
+        };
+
+        return View(model);
     }
 
     // POST: EXPENSES/Create

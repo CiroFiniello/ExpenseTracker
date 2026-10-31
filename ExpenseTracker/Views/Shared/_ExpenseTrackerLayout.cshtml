@@ -1,0 +1,89 @@
+﻿
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - ExpenseTracker</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+</head>
+
+<body class="bg-light">
+
+    <header class="bg-white border-bottom">
+        <nav class="navbar navbar-expand-md navbar-light">
+            <div class="container">
+
+                <a class="navbar-brand fw-bold text-primary"
+                   asp-controller="Home"
+                   asp-action="Index">
+                    ExpenseTracker
+                </a>
+
+                <button class="navbar-toggler"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#mainNavigation"
+                        aria-controls="mainNavigation"
+                        aria-expanded="false"
+                        aria-label="Apri navigazione">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse"
+                     id="mainNavigation">
+
+                    <ul class="navbar-nav ms-auto gap-md-2">
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               asp-controller="Home"
+                               asp-action="Index">
+                                Home
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               asp-controller="Expenses"
+                               asp-action="Index">
+                                Spese
+                            </a>
+                        </li>
+                    </ul>
+
+                    <a asp-controller="Expenses"
+                       asp-action="Create"
+                       class="btn btn-primary btn-sm ms-md-3">
+                        + Nuova spesa
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container py-4 py-lg-5">
+        @RenderBody()
+    </main>
+
+    <footer class="border-top py-3 mt-5 text-muted">
+        <div class="container">
+            <small>
+                ExpenseTracker · ASP.NET Core MVC
+            </small>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
