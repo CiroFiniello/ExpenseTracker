@@ -7,8 +7,8 @@ namespace ExpenseTracker.ViewModels
         public string Merchant { get; set; } = string.Empty;
         public DateOnly OccurredOn { get; set; }
 
-        public int CategoryId { get; set; }
-        public decimal Amount { get; set; }
+        public List<ExpenseAllocationInputViewModel> Allocations { get; set; } = new();
+
 
         public List<SelectListItem> Categories { get; set; } = new();
     }

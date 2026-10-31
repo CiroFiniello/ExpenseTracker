@@ -2,139 +2,348 @@
 
 @{
     ViewData["Title"] = "Le mie spese";
+
+    var expenses = Model.ToList();
+
+    var allocations = expenses
+        .SelectMany(e => e.Allocations)
+        .ToList();
+
+    var totalAmount = allocations.Sum(a => a.Amount);
+
+    var categoryTotals = allocations
+        .GroupBy(a => new { a.CategoryId, a.Category.Name })
+        .Select(g => new
+        {
+            Name = g.Key.Name,
+            Total = g.Sum(a => a.Amount)
+        })
+        .OrderByDescending(c => c.Total)
+        .ToList();
+
+    var multiCategoryCount = expenses
+        .Count(e => e.Allocations.Count > 1);
 }
 
 <div class="row justify-content-center">
-    <div class="col-12 col-xl-10">
+    <div class="col-12 col-xl-11">
 
-        <!-- Header -->
-        <div class="d-flex flex-wrap align-items-center
-            justify-content-between gap-3 mb-4">
+        <!-- Page header -->
+        <div class="d-flex flex-wrap justify-content-between
+            align-items-center gap-3 mb-4">
 
             <div>
                 <h1 class="fw-bold mb-2">Le mie spese</h1>
                 <p class="text-muted mb-0">
-                    Visualizza e gestisci i tuoi movimenti.
+                    Monitora le tue uscite e scopri come
+                    si distribuiscono tra le categorie.
                 </p>
             </div>
 
-            <a asp-action="Create"
-               class="btn btn-primary">
-                + Nuova spesa
-            </a>
+            
         </div>
 
-        <!-- Expense list -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-0">
+        <!-- Summary -->
+        <div class="row g-3 mb-4">
 
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-2">
+                            Totale speso
+                        </p>
 
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4 py-3">Descrizione</th>
-                                <th class="py-3">Esercente</th>
-                                <th class="py-3">Data</th>
-                                <th class="py-3">Ripartizione</th>
-                                <th class="py-3 text-end">Totale</th>
-                                <th class="pe-4 py-3 text-end">Azioni</th>
-                            </tr>
-                        </thead>
+                        <h2 class="fw-bold mb-1">
+                            @totalAmount.ToString("N2") €
+                        </h2>
 
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
-                                var total = item.Allocations.Sum(a => a.Amount);
+                        <span class="text-muted small">
+                            Tutti i movimenti registrati
+                        </span>
+                    </div>
+                </div>
+            </div>
 
-                                <tr>
-                                    <td class="ps-4">
-                                        <span class="fw-semibold">
-                                            @item.Description
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-2">
+                            Spese registrate
+                        </p>
+
+                        <h2 class="fw-bold mb-1">
+                            @expenses.Count
+                        </h2>
+
+                        <span class="text-muted small">
+                            @multiCategoryCount con più categorie
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-2">
+                            Categorie utilizzate
+                        </p>
+
+                        <h2 class="fw-bold mb-1">
+                            @categoryTotals.Count
+                        </h2>
+
+                        <span class="text-muted small">
+                            @allocations.Count ripartizioni totali
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Expenses -->
+            <div class="col-12 col-lg-8">
+
+                <h2 class="h5 fw-bold mb-3">
+                    Movimenti registrati
+                </h2>
+
+                @if (!expenses.Any())
+                {
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center p-5">
+
+                            <h3 class="h5 fw-semibold">
+                                Nessuna spesa registrata
+                            </h3>
+
+                            <p class="text-muted">
+                                Aggiungi il tuo primo movimento
+                                per iniziare a monitorare le spese.
+                            </p>
+
+                            <a asp-action="Create"
+                               class="btn btn-primary">
+                                Registra una spesa
+                            </a>
+
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var expense in expenses)
+                    {
+                        var total = expense.Allocations
+                            .Sum(a => a.Amount);
+
+                        <div class="card border-0 shadow-sm mb-3">
+
+                            <div class="card-body p-4">
+
+                                <!-- Expense overview -->
+                                <div class="d-flex flex-wrap
+                                    justify-content-between
+                                    align-items-start gap-3">
+
+                                    <div>
+                                        <h3 class="h5 fw-bold mb-1">
+                                            @expense.Description
+                                        </h3>
+
+                                        <p class="text-muted small mb-0">
+                                            @expense.Merchant
+                                            ·
+                                            @expense.OccurredOn.ToString("dd/MM/yyyy")
+                                        </p>
+                                    </div>
+
+                                    <div class="text-end">
+                                        <div class="text-muted small">
+                                            Totale spesa
+                                        </div>
+
+                                        <div class="fs-4 fw-bold">
+                                            @total.ToString("N2") €
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <!-- Allocations -->
+                                <div class="border-top mt-3 pt-3">
+
+                                    <div class="d-flex
+                                        justify-content-between
+                                        align-items-center mb-3">
+
+                                        <span class="fw-semibold small">
+                                            Ripartizione per categoria
                                         </span>
-                                    </td>
 
-                                    <td>@item.Merchant</td>
+                                        <span class="text-muted small">
+                                            @expense.Allocations.Count categorie
+                                        </span>
 
-                                    <td class="text-muted">
-                                        @item.OccurredOn.ToString("dd/MM/yyyy")
-                                    </td>
+                                    </div>
 
-                                    <td>
-                                        @if (item.Allocations.Any())
+                                    @if (expense.Allocations.Any())
+                                    {
+                                        @foreach (var allocation in
+                                            expense.Allocations.OrderByDescending(a => a.Amount))
                                         {
-                                            @foreach (var allocation in item.Allocations)
-                                            {
-                                                <div class="small mb-1">
-                                                    <span class="badge bg-light
-                                                        text-dark border">
-                                                        @allocation.Category.Name
-                                                    </span>
+                                            var percentage = total > 0
+                                                ? allocation.Amount / total * 100
+                                                : 0;
 
-                                                    <span class="text-muted ms-1">
+                                            <div class="d-flex
+                                                justify-content-between
+                                                align-items-center
+                                                gap-3 mb-2">
+
+                                                <span class="badge bg-light
+                                                    text-dark border">
+                                                    @allocation.Category.Name
+                                                </span>
+
+                                                <div class="text-end">
+                                                    <span class="fw-semibold small">
                                                         @allocation.Amount.ToString("N2") €
                                                     </span>
+
+                                                    <span class="text-muted small ms-2">
+                                                        (@percentage.ToString("N0")%)
+                                                    </span>
                                                 </div>
-                                            }
+
+                                            </div>
                                         }
-                                        else
-                                        {
-                                            <span class="text-muted">—</span>
-                                        }
-                                    </td>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted small mb-0">
+                                            Nessuna ripartizione presente.
+                                        </p>
+                                    }
 
-                                    <td class="text-end fw-bold">
-                                        @total.ToString("N2") €
-                                    </td>
+                                </div>
 
-                                    <td class="pe-4 text-end">
-                                        <div class="d-flex justify-content-end gap-2">
-                                            <a asp-action="Details"
-                                               asp-route-id="@item.Id"
-                                               class="btn btn-sm btn-outline-secondary">
-                                                Dettagli
-                                            </a>
+                                <!-- Actions -->
+                                <div class="border-top mt-3 pt-3
+                                    d-flex flex-wrap
+                                    justify-content-end gap-2">
 
-                                            <a asp-action="Edit"
-                                               asp-route-id="@item.Id"
-                                               class="btn btn-sm btn-outline-primary">
-                                                Modifica
-                                            </a>
+                                    <a asp-action="Details"
+                                       asp-route-id="@expense.Id"
+                                       class="btn btn-sm btn-outline-secondary">
+                                        Dettagli
+                                    </a>
 
-                                            <a asp-action="Delete"
-                                               asp-route-id="@item.Id"
-                                               class="btn btn-sm btn-outline-danger">
-                                                Elimina
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
+                                    <a asp-action="Edit"
+                                       asp-route-id="@expense.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Modifica
+                                    </a>
 
-                            @if (!Model.Any())
+                                    <a asp-action="Delete"
+                                       asp-route-id="@expense.Id"
+                                       class="btn btn-sm btn-outline-danger">
+                                        Elimina
+                                    </a>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    }
+                }
+
+            </div>
+
+            <!-- Category summary -->
+            <div class="col-12 col-lg-4">
+
+                <h2 class="h5 fw-bold mb-3">
+                    Spese per categoria
+                </h2>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+
+                        <p class="text-muted small mb-4">
+                            Quanto hai destinato a ogni categoria,
+                            considerando tutte le spese registrate.
+                        </p>
+
+                        @if (!categoryTotals.Any())
+                        {
+                            <p class="text-muted small mb-0">
+                                Non ci sono ancora dati da analizzare.
+                            </p>
+                        }
+                        else
+                        {
+                            @foreach (var category in categoryTotals)
                             {
-                                <tr>
-                                    <td colspan="6" class="text-center py-5">
-                                        <p class="fw-semibold mb-1">
-                                            Nessuna spesa registrata
-                                        </p>
+                                var percentage = totalAmount > 0
+                                    ? category.Total / totalAmount * 100
+                                    : 0;
 
-                                        <p class="text-muted small mb-3">
-                                            Inizia aggiungendo il tuo primo movimento.
-                                        </p>
+                                <div class="mb-4">
 
-                                        <a asp-action="Create"
-                                           class="btn btn-primary">
-                                            Aggiungi una spesa
-                                        </a>
-                                    </td>
-                                </tr>
+                                    <div class="d-flex
+                                        justify-content-between
+                                        align-items-center mb-1">
+
+                                        <span class="fw-semibold small">
+                                            @category.Name
+                                        </span>
+
+                                        <span class="fw-semibold small">
+                                            @category.Total.ToString("N2") €
+                                        </span>
+
+                                    </div>
+
+                                    <div class="progress"
+                                         style="height: 7px;">
+
+                                        <div class="progress-bar"
+                                             style="width: @(percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;">
+                                        </div>
+
+                                    </div>
+
+                                    <div class="text-muted small mt-1">
+                                        @percentage.ToString("N1")%
+                                        del totale
+                                    </div>
+
+                                </div>
                             }
-                        </tbody>
-                    </table>
+
+                            <div class="border-top pt-3 mt-2
+                                d-flex justify-content-between">
+
+                                <span class="fw-semibold">
+                                    Totale complessivo
+                                </span>
+
+                                <span class="fw-bold">
+                                    @totalAmount.ToString("N2") €
+                                </span>
+
+                            </div>
+                        }
+
+                    </div>
                 </div>
 
             </div>
+
         </div>
 
     </div>

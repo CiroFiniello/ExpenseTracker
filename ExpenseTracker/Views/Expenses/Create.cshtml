@@ -31,10 +31,9 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-body p-4 p-md-5">
 
-                        <form asp-action="Create"
-                              method="post">
+                        <form asp-action="Create" method="post">
 
-                            <div asp-validation-summary="ModelOnly"
+                            <div asp-validation-summary="All"
                                  class="text-danger mb-3">
                             </div>
 
@@ -58,8 +57,7 @@
                                        placeholder="Es. Spesa settimanale" />
 
                                 <span asp-validation-for="Description"
-                                      class="text-danger small">
-                                </span>
+                                      class="text-danger small"></span>
                             </div>
 
                             <div class="row g-3">
@@ -76,8 +74,7 @@
                                            placeholder="Es. Lidl" />
 
                                     <span asp-validation-for="Merchant"
-                                          class="text-danger small">
-                                    </span>
+                                          class="text-danger small"></span>
                                 </div>
 
                                 <!-- Date -->
@@ -92,66 +89,110 @@
                                            class="form-control" />
 
                                     <span asp-validation-for="OccurredOn"
-                                          class="text-danger small">
-                                    </span>
+                                          class="text-danger small"></span>
                                 </div>
                             </div>
 
                             <hr class="my-4" />
 
-                            <h2 class="h5 fw-bold mb-1">
-                                Ripartizione della spesa
-                            </h2>
+                            <!-- Allocations -->
+                            <div class="d-flex justify-content-between
+                                align-items-center mb-2">
+                                <h2 class="h5 fw-bold mb-0">
+                                    Ripartizione della spesa
+                                </h2>
+                            </div>
 
                             <p class="text-muted small mb-4">
-                                Per ora inseriamo una sola categoria
-                                e il relativo importo.
+                                Suddividi l'importo tra una o più categorie.
                             </p>
 
-                            <div class="row g-3">
+                            <div id="allocation-rows">
 
-                                <!-- Category -->
-                                <div class="col-md-6">
-                                    <label asp-for="CategoryId"
-                                           class="form-label fw-semibold">
-                                        Categoria
-                                    </label>
+                                @for (var i = 0; i < Model.Allocations.Count; i++)
+                                {
+                                    <div class="allocation-row row g-3
+                                        align-items-end mb-3">
 
-                                    <select asp-for="CategoryId"
-                                            asp-items="Model.Categories"
-                                            class="form-select">
-                                        <option value="">Seleziona categoria</option>
-                                    </select>
+                                        <!-- Category -->
+                                        <div class="col-md-5">
+                                            <label asp-for="Allocations[i].CategoryId"
+                                                   data-label="CategoryId"
+                                                   class="form-label fw-semibold">
+                                                Categoria
+                                            </label>
 
-                                    <span asp-validation-for="CategoryId"
-                                          class="text-danger small">
-                                    </span>
-                                </div>
+                                            <select asp-for="Allocations[i].CategoryId"
+                                                    asp-items="Model.Categories"
+                                                    data-field="CategoryId"
+                                                    class="form-select"
+                                                    required>
+                                                <option value="">
+                                                    Seleziona categoria
+                                                </option>
+                                            </select>
 
-                                <!-- Amount -->
-                                <div class="col-md-6">
-                                    <label asp-for="Amount"
-                                           class="form-label fw-semibold">
-                                        Importo (€)
-                                    </label>
+                                            <span asp-validation-for="Allocations[i].CategoryId"
+                                                  data-error="CategoryId"
+                                                  class="text-danger small"></span>
+                                        </div>
 
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            €
-                                        </span>
+                                        <!-- Amount -->
+                                        <div class="col-md-4">
+                                            <label asp-for="Allocations[i].Amount"
+                                                   data-label="Amount"
+                                                   class="form-label fw-semibold">
+                                                Importo (€)
+                                            </label>
 
-                                        <input asp-for="Amount"
-                                               type="number"
-                                               step="0.01"
-                                               min="0.01"
-                                               class="form-control"
-                                               placeholder="0.00" />
+                                            <div class="input-group">
+                                                <span class="input-group-text">€</span>
+
+                                                <input asp-for="Allocations[i].Amount"
+                                                       data-field="Amount"
+                                                       type="number"
+                                                       min="0.01"
+                                                       step="0.01"
+                                                       required
+                                                       class="form-control"
+                                                       placeholder="0.00" />
+                                            </div>
+
+                                            <span asp-validation-for="Allocations[i].Amount"
+                                                  data-error="Amount"
+                                                  class="text-danger small"></span>
+                                        </div>
+
+                                        <!-- Remove -->
+                                        <div class="col-md-3">
+                                            <button type="button"
+                                                    class="btn btn-outline-danger
+                                                remove-allocation w-100">
+                                                Rimuovi
+                                            </button>
+                                        </div>
                                     </div>
+                                }
 
-                                    <span asp-validation-for="Amount"
-                                          class="text-danger small">
-                                    </span>
-                                </div>
+                            </div>
+
+                            <button type="button"
+                                    id="add-allocation"
+                                    class="btn btn-outline-primary btn-sm mt-2">
+                                + Aggiungi categoria
+                            </button>
+
+                            <!-- Total -->
+                            <div class="d-flex justify-content-between
+                                align-items-center border-top mt-4 pt-3">
+
+                                <span class="fw-semibold">
+                                    Totale spesa
+                                </span>
+
+                                <strong id="expense-total" class="fs-4">
+                                    0,00 €
+                                </strong>
                             </div>
 
                             <hr class="my-4" />
@@ -164,11 +205,11 @@
                                 </a>
 
                                 <button type="submit"
-                                        class="btn btn-primary"
-                                        title="Attiveremo il salvataggio dopo aver collegato categoria e POST">
+                                        class="btn btn-primary">
                                     Salva spesa
                                 </button>
                             </div>
+
                         </form>
 
                     </div>
@@ -190,13 +231,14 @@
                         </p>
 
                         <p class="text-muted small">
-                            La categoria indica a quale gruppo
-                            appartiene l'importo registrato.
+                            Puoi assegnare importi diversi
+                            a più categorie della stessa spesa.
                         </p>
 
                         <div class="alert alert-primary small mb-0">
-                            Successivamente potremo suddividere
-                            una spesa tra più categorie.
+                            Il totale viene calcolato
+                            automaticamente sommando
+                            tutte le ripartizioni.
                         </div>
 
                     </div>
@@ -207,6 +249,157 @@
     </div>
 </div>
 
+<!-- Template per le nuove righe -->
+<template id="allocation-template">
+    <div class="allocation-row row g-3 align-items-end mb-3">
+
+        <div class="col-md-5">
+            <label data-label="CategoryId"
+                   class="form-label fw-semibold">
+                Categoria
+            </label>
+
+            <select data-field="CategoryId"
+                    class="form-select"
+                    required>
+                <option value="">Seleziona categoria</option>
+
+                @foreach (var category in Model.Categories)
+                {
+                    <option value="@category.Value">
+                        @category.Text
+                    </option>
+                }
+            </select>
+
+            <span data-error="CategoryId"
+                  class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label data-label="Amount"
+                   class="form-label fw-semibold">
+                Importo (€)
+            </label>
+
+            <div class="input-group">
+                <span class="input-group-text">€</span>
+
+                <input data-field="Amount"
+                       type="number"
+                       min="0.01"
+                       step="0.01"
+                       required
+                       class="form-control"
+                       placeholder="0.00" />
+            </div>
+
+            <span data-error="Amount"
+                  class="text-danger small"></span>
+        </div>
+
+        <div class="col-md-3">
+            <button type="button"
+                    class="btn btn-outline-danger
+                remove-allocation w-100">
+                Rimuovi
+            </button>
+        </div>
+
+    </div>
+</template>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const container = document.getElementById("allocation-rows");
+        const template = document.getElementById("allocation-template");
+        const addButton = document.getElementById("add-allocation");
+        const totalElement = document.getElementById("expense-total");
+
+        function refreshAllocations() {
+            const rows = Array.from(
+                container.querySelectorAll(".allocation-row")
+            );
+
+            rows.forEach((row, index) => {
+                for (const field of ["CategoryId", "Amount"]) {
+                    const input = row.querySelector(
+                        `[data-field="${field}"]`
+                    );
+
+                    input.name = `Allocations[${index}].${field}`;
+                    input.id = `Allocations_${index}__${field}`;
+
+                    const label = row.querySelector(
+                        `[data-label="${field}"]`
+                    );
+
+                    label.htmlFor = input.id;
+
+                    const error = row.querySelector(
+                        `[data-error="${field}"]`
+                    );
+
+                    if (error) {
+                        error.setAttribute(
+                            "data-valmsg-for",
+                            input.name
+                        );
+                    }
+                }
+
+                row.querySelector(".remove-allocation").disabled =
+                    rows.length === 1;
+            });
+
+            updateTotal();
+        }
+
+        function updateTotal() {
+            const rows = container.querySelectorAll(".allocation-row");
+
+            const total = Array.from(rows).reduce((sum, row) => {
+                const amount = row.querySelector(
+                    '[data-field="Amount"]'
+                );
+
+                return sum + (Number(amount.value) || 0);
+            }, 0);
+
+            totalElement.textContent = total.toLocaleString(
+                "it-IT",
+                {
+                    style: "currency",
+                    currency: "EUR"
+                }
+            );
+        }
+
+        addButton.addEventListener("click", () => {
+            const newRow = template.content
+                .firstElementChild.cloneNode(true);
+
+            container.appendChild(newRow);
+            refreshAllocations();
+        });
+
+        container.addEventListener("click", (event) => {
+            const button = event.target.closest(".remove-allocation");
+
+            if (!button) return;
+
+            const rows = container.querySelectorAll(".allocation-row");
+
+            if (rows.length <= 1) return;
+
+            button.closest(".allocation-row").remove();
+            refreshAllocations();
+        });
+
+        container.addEventListener("input", updateTotal);
+
+        refreshAllocations();
+    </script>
 }

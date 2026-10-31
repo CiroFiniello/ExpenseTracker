@@ -1,45 +1,242 @@
 @model ExpenseTracker.Models.Expense
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Dettaglio spesa";
+
+    var total = Model.Allocations.Sum(a => a.Amount);
 }
 
-<h1>Details</h1>
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
 
-<div>
-    <h4>Expense</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Merchant)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Merchant)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.OccurredOn)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.OccurredOn)
-        </dd>
-    </dl>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Allocations)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Allocations)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+        <!-- Header -->
+        <div class="d-flex flex-wrap justify-content-between
+            align-items-start gap-3 mb-4">
+
+            <div>
+                <a asp-action="Index"
+                   class="text-decoration-none text-muted small">
+                    ← Torna alle spese
+                </a>
+
+                <h1 class="fw-bold mt-3 mb-2">
+                    Dettaglio spesa
+                </h1>
+
+                <p class="text-muted mb-0">
+                    Visualizza le informazioni e la ripartizione
+                    del movimento registrato.
+                </p>
+            </div>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.Id"
+               class="btn btn-primary">
+                Modifica spesa
+            </a>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Main content -->
+            <div class="col-12 col-lg-8">
+
+                <!-- General information -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+
+                        <h2 class="h5 fw-bold mb-4">
+                            Informazioni generali
+                        </h2>
+
+                        <div class="row g-4">
+
+                            <div class="col-12">
+                                <div class="text-muted small mb-1">
+                                    Descrizione
+                                </div>
+
+                                <div class="fw-semibold">
+                                    @Model.Description
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="text-muted small mb-1">
+                                    Esercente
+                                </div>
+
+                                <div class="fw-semibold">
+                                    @Model.Merchant
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="text-muted small mb-1">
+                                    Data della spesa
+                                </div>
+
+                                <div class="fw-semibold">
+                                    @Model.OccurredOn.ToString("dd/MM/yyyy")
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Allocations -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+
+                        <div class="d-flex justify-content-between
+                            align-items-center mb-3">
+
+                            <h2 class="h5 fw-bold mb-0">
+                                Ripartizione della spesa
+                            </h2>
+
+                            <span class="badge bg-light text-dark border">
+                                @Model.Allocations.Count categorie
+                            </span>
+                        </div>
+
+                        <p class="text-muted small mb-4">
+                            Distribuzione dell'importo
+                            tra le categorie selezionate.
+                        </p>
+
+                        @if (Model.Allocations.Any())
+                        {
+                            @foreach (var allocation in Model.Allocations
+                                .OrderByDescending(a => a.Amount))
+                            {
+                                var percentage = total > 0
+                                    ? allocation.Amount / total * 100
+                                    : 0m;
+
+                                <div class="mb-4">
+
+                                    <div class="d-flex justify-content-between
+                                        align-items-center gap-3 mb-2">
+
+                                        <span class="fw-semibold">
+                                            @allocation.Category.Name
+                                        </span>
+
+                                        <span class="fw-bold">
+                                            @allocation.Amount.ToString("N2") €
+                                        </span>
+                                    </div>
+
+                                    <div class="progress"
+                                         style="height: 8px;">
+
+                                        <div class="progress-bar"
+                                             role="progressbar"
+                                             style="width: @(percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;"
+                                             aria-label="@allocation.Category.Name"
+                                             aria-valuenow="@percentage.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+
+                                    <div class="text-muted small mt-1">
+                                        @percentage.ToString("N1")%
+                                        del totale
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">
+                                Nessuna ripartizione presente.
+                            </p>
+                        }
+
+                        <!-- Total -->
+                        <div class="border-top pt-4 mt-3
+                            d-flex justify-content-between
+                            align-items-center">
+
+                            <span class="fw-semibold">
+                                Totale spesa
+                            </span>
+
+                            <span class="fs-3 fw-bold">
+                                @total.ToString("N2") €
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex flex-wrap
+                    justify-content-between gap-2 mt-4">
+
+                    <a asp-action="Delete"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-outline-danger">
+                        Elimina spesa
+                    </a>
+
+                    <a asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Torna all'elenco
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-12 col-lg-4">
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+
+                        <h2 class="h6 fw-bold mb-3">
+                            Riepilogo movimento
+                        </h2>
+
+                        <div class="text-muted small mb-1">
+                            Importo totale
+                        </div>
+
+                        <div class="fs-3 fw-bold text-primary mb-3">
+                            @total.ToString("N2") €
+                        </div>
+
+                        <div class="border-top pt-3">
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted small">
+                                    Ripartizioni
+                                </span>
+
+                                <span class="fw-semibold small">
+                                    @Model.Allocations.Count
+                                </span>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small">
+                                    ID movimento
+                                </span>
+
+                                <span class="fw-semibold small">
+                                    #@Model.Id
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
 </div>

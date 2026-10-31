@@ -32,16 +32,16 @@ public class ExpensesController : Controller
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null)
-        {
             return NotFound();
-        }
 
         var expense = await _context.Expenses
-            .FirstOrDefaultAsync(m => m.Id == id);
+            .AsNoTracking()
+            .Include(e => e.Allocations)
+                .ThenInclude(a => a.Category)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
         if (expense == null)
-        {
             return NotFound();
-        }
 
         return View(expense);
     }
@@ -53,15 +53,12 @@ public class ExpensesController : Controller
         {
             OccurredOn = DateOnly.FromDateTime(DateTime.Today),
 
-            Categories = await _context.Categories
-                .AsNoTracking()
-                .OrderBy(c => c.Name)
-                .Select(c => new SelectListItem
-                {
-                    Value = c.Id.ToString(),
-                    Text = c.Name
-                })
-                .ToListAsync()
+            Allocations = new List<ExpenseAllocationInputViewModel>
+        {
+            new()
+        },
+
+            Categories = await GetCategoryOptionsAsync()
         };
 
         return View(model);
@@ -75,42 +72,56 @@ public class ExpensesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateExpenseViewModel model)
     {
-        // Validazione dell'importo
-        if (model.Amount <= 0)
+        if (model.Allocations.Count == 0)
         {
             ModelState.AddModelError(
-                nameof(model.Amount),
-                "L'importo deve essere maggiore di zero.");
+                nameof(model.Allocations),
+                "Inserisci almeno una ripartizione.");
         }
 
-        // Verifica che la categoria esista
-        bool categoryExists = await _context.Categories
-            .AnyAsync(c => c.Id == model.CategoryId);
+        var validCategoryIds = await _context.Categories
+            .Select(c => c.Id)
+            .ToListAsync();
 
-        if (!categoryExists)
+        var selectedCategories = new HashSet<int>();
+
+        for (int i = 0; i < model.Allocations.Count; i++)
         {
-            ModelState.AddModelError(
-                nameof(model.CategoryId),
-                "Seleziona una categoria valida.");
+            var allocation = model.Allocations[i];
+
+            if (allocation.Amount <= 0)
+            {
+                ModelState.AddModelError(
+                    $"Allocations[{i}].Amount",
+                    "L'importo deve essere maggiore di zero.");
+            }
+
+            if (!validCategoryIds.Contains(allocation.CategoryId))
+            {
+                ModelState.AddModelError(
+                    $"Allocations[{i}].CategoryId",
+                    "Seleziona una categoria valida.");
+            }
+            else if (!selectedCategories.Add(allocation.CategoryId))
+            {
+                ModelState.AddModelError(
+                    $"Allocations[{i}].CategoryId",
+                    "Questa categoria è già presente.");
+            }
         }
 
-        // Se ci sono errori, torniamo al form
         if (!ModelState.IsValid)
         {
-            model.Categories = await _context.Categories
-                .AsNoTracking()
-                .OrderBy(c => c.Name)
-                .Select(c => new SelectListItem
-                {
-                    Value = c.Id.ToString(),
-                    Text = c.Name
-                })
-                .ToListAsync();
+            model.Categories = await GetCategoryOptionsAsync();
+
+            if (model.Allocations.Count == 0)
+            {
+                model.Allocations.Add(new ExpenseAllocationInputViewModel());
+            }
 
             return View(model);
         }
 
-        // Creiamo la spesa
         var expense = new Expense
         {
             Description = model.Description,
@@ -118,20 +129,22 @@ public class ExpensesController : Controller
             OccurredOn = model.OccurredOn
         };
 
-        // Aggiungiamo la ripartizione economica
-        expense.Allocations.Add(new ExpenseAllocation
+        foreach (var allocation in model.Allocations)
         {
-            CategoryId = model.CategoryId,
-            Amount = model.Amount
-        });
+            expense.Allocations.Add(new ExpenseAllocation
+            {
+                CategoryId = allocation.CategoryId,
+                Amount = allocation.Amount
+            });
+        }
 
-        // Salviamo tutto
         _context.Expenses.Add(expense);
         await _context.SaveChangesAsync();
 
         return RedirectToAction(nameof(Index));
     }
- private Task<List<SelectListItem>> GetCategoryOptionsAsync()
+
+    private Task<List<SelectListItem>> GetCategoryOptionsAsync()
     {
         return _context.Categories
             .AsNoTracking()
@@ -146,6 +159,7 @@ public class ExpensesController : Controller
 
     // GET: EXPENSES/Edit/5
 
+
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -159,11 +173,6 @@ public class ExpensesController : Controller
         if (expense == null)
             return NotFound();
 
-        if (expense.Allocations.Count > 1)
-            return Conflict("Questa spesa contiene più ripartizioni, non ancora supportate dall'editor.");
-
-        var allocation = expense.Allocations.FirstOrDefault();
-
         var model = new EditExpenseViewModel
         {
             Id = expense.Id,
@@ -171,11 +180,23 @@ public class ExpensesController : Controller
             Merchant = expense.Merchant,
             OccurredOn = expense.OccurredOn,
 
-            CategoryId = allocation?.CategoryId ?? 0,
-            Amount = allocation?.Amount ?? 0m,
+            Allocations = expense.Allocations
+                .OrderBy(a => a.Id)
+                .Select(a => new ExpenseAllocationInputViewModel
+                {
+                    Id = a.Id,
+                    CategoryId = a.CategoryId,
+                    Amount = a.Amount
+                })
+                .ToList(),
 
             Categories = await GetCategoryOptionsAsync()
         };
+
+        if (model.Allocations.Count == 0)
+        {
+            model.Allocations.Add(new ExpenseAllocationInputViewModel());
+        }
 
         return View(model);
     }
@@ -187,35 +208,13 @@ public class ExpensesController : Controller
     // To protect from overposting attacks, enable the specific properties you want to bind to.
     // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
 
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, EditExpenseViewModel model)
     {
         if (id != model.Id)
             return NotFound();
-
-        if (model.Amount <= 0)
-        {
-            ModelState.AddModelError(
-                nameof(model.Amount),
-                "L'importo deve essere maggiore di zero.");
-        }
-
-        bool categoryExists = await _context.Categories
-            .AnyAsync(c => c.Id == model.CategoryId);
-
-        if (!categoryExists)
-        {
-            ModelState.AddModelError(
-                nameof(model.CategoryId),
-                "Seleziona una categoria valida.");
-        }
-
-        if (!ModelState.IsValid)
-        {
-            model.Categories = await GetCategoryOptionsAsync();
-            return View(model);
-        }
 
         var expense = await _context.Expenses
             .Include(e => e.Allocations)
@@ -224,33 +223,111 @@ public class ExpensesController : Controller
         if (expense == null)
             return NotFound();
 
-        if (expense.Allocations.Count > 1)
-            return Conflict("Questa spesa contiene più ripartizioni, non ancora supportate dall'editor.");
+        if (model.Allocations == null || model.Allocations.Count == 0)
+        {
+            ModelState.AddModelError(
+                nameof(model.Allocations),
+                "La spesa deve contenere almeno una ripartizione.");
+        }
+        else
+        {
+            var validCategoryIds = (await _context.Categories
+                .Select(c => c.Id)
+                .ToListAsync()).ToHashSet();
 
+            var selectedCategories = new HashSet<int>();
+            var submittedIds = new HashSet<int>();
+            var existingIds = expense.Allocations
+                .Select(a => a.Id)
+                .ToHashSet();
+
+            for (int i = 0; i < model.Allocations.Count; i++)
+            {
+                var allocation = model.Allocations[i];
+
+                if (allocation.Amount <= 0)
+                {
+                    ModelState.AddModelError(
+                        $"Allocations[{i}].Amount",
+                        "L'importo deve essere maggiore di zero.");
+                }
+
+                if (!validCategoryIds.Contains(allocation.CategoryId))
+                {
+                    ModelState.AddModelError(
+                        $"Allocations[{i}].CategoryId",
+                        "Seleziona una categoria valida.");
+                }
+                else if (!selectedCategories.Add(allocation.CategoryId))
+                {
+                    ModelState.AddModelError(
+                        $"Allocations[{i}].CategoryId",
+                        "Questa categoria è già presente.");
+                }
+
+                if (allocation.Id < 0 ||
+                    (allocation.Id > 0 &&
+                     (!existingIds.Contains(allocation.Id) ||
+                      !submittedIds.Add(allocation.Id))))
+                {
+                    ModelState.AddModelError(
+                        $"Allocations[{i}].Id",
+                        "La ripartizione non è valida.");
+                }
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.Categories = await GetCategoryOptionsAsync();
+            return View(model);
+        }
+
+        // Aggiorniamo i dati generali della spesa.
         expense.Description = model.Description;
         expense.Merchant = model.Merchant;
         expense.OccurredOn = model.OccurredOn;
 
-        var allocation = expense.Allocations.FirstOrDefault();
+        // Gli ID presenti nel form sono quelli da conservare.
+        var retainedIds = model.Allocations
+            .Where(a => a.Id > 0)
+            .Select(a => a.Id)
+            .ToHashSet();
 
-        if (allocation == null)
+        // Eliminiamo le ripartizioni rimosse dal form.
+        foreach (var existing in expense.Allocations
+            .Where(a => !retainedIds.Contains(a.Id))
+            .ToList())
         {
-            expense.Allocations.Add(new ExpenseAllocation
-            {
-                CategoryId = model.CategoryId,
-                Amount = model.Amount
-            });
+            _context.ExpenseAllocations.Remove(existing);
         }
-        else
+
+        // Aggiorniamo le ripartizioni esistenti o ne creiamo di nuove.
+        foreach (var allocation in model.Allocations)
         {
-            allocation.CategoryId = model.CategoryId;
-            allocation.Amount = model.Amount;
+            if (allocation.Id > 0)
+            {
+                var existing = expense.Allocations
+                    .Single(a => a.Id == allocation.Id);
+
+                existing.CategoryId = allocation.CategoryId;
+                existing.Amount = allocation.Amount;
+            }
+            else
+            {
+                expense.Allocations.Add(new ExpenseAllocation
+                {
+                    CategoryId = allocation.CategoryId,
+                    Amount = allocation.Amount
+                });
+            }
         }
 
         await _context.SaveChangesAsync();
 
         return RedirectToAction(nameof(Index));
     }
+
 
 
     // GET: EXPENSES/Delete/5
