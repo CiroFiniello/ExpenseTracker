@@ -1,49 +1,191 @@
-@model ExpenseTracker.Models.Expense
+@model ExpenseTracker.ViewModels.EditExpenseViewModel
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Modifica spesa";
 }
 
-<h1>Edit</h1>
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
 
-<h4>Expense</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
+        <div class="mb-4">
+            <a asp-action="Index"
+               class="text-decoration-none text-muted small">
+                ← Torna alle spese
+            </a>
+
+            <h1 class="fw-bold mt-3 mb-2">
+                Modifica spesa
+            </h1>
+
+            <p class="text-muted mb-0">
+                Aggiorna le informazioni del movimento.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 p-md-5">
+
+                        <form asp-action="Edit"
+                              asp-route-id="@Model.Id"
+                              method="post">
+
+                            <input type="hidden" asp-for="Id" />
+
+                            <div asp-validation-summary="ModelOnly"
+                                 class="text-danger mb-3">
+                            </div>
+
+                            <h2 class="h5 fw-bold mb-1">
+                                Informazioni generali
+                            </h2>
+
+                            <p class="text-muted small mb-4">
+                                Modifica i dati della spesa.
+                            </p>
+
+                            <div class="mb-3">
+                                <label asp-for="Description"
+                                       class="form-label fw-semibold">
+                                    Descrizione
+                                </label>
+
+                                <input asp-for="Description"
+                                       class="form-control" />
+
+                                <span asp-validation-for="Description"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="Merchant"
+                                           class="form-label fw-semibold">
+                                        Esercente
+                                    </label>
+
+                                    <input asp-for="Merchant"
+                                           class="form-control" />
+
+                                    <span asp-validation-for="Merchant"
+                                          class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="OccurredOn"
+                                           class="form-label fw-semibold">
+                                        Data
+                                    </label>
+
+                                    <input asp-for="OccurredOn"
+                                           type="date"
+                                           class="form-control" />
+
+                                    <span asp-validation-for="OccurredOn"
+                                          class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <hr class="my-4" />
+
+                            <h2 class="h5 fw-bold mb-1">
+                                Ripartizione della spesa
+                            </h2>
+
+                            <p class="text-muted small mb-4">
+                                Modifica la categoria e il relativo importo.
+                            </p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="CategoryId"
+                                           class="form-label fw-semibold">
+                                        Categoria
+                                    </label>
+
+                                    <select asp-for="CategoryId"
+                                            asp-items="Model.Categories"
+                                            class="form-select">
+                                        <option value="">
+                                            Seleziona categoria
+                                        </option>
+                                    </select>
+
+                                    <span asp-validation-for="CategoryId"
+                                          class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="Amount"
+                                           class="form-label fw-semibold">
+                                        Importo (€)
+                                    </label>
+
+                                    <div class="input-group">
+                                        <span class="input-group-text">€</span>
+
+                                        <input asp-for="Amount"
+                                               type="number"
+                                               min="0.01"
+                                               step="0.01"
+                                               class="form-control" />
+                                    </div>
+
+                                    <span asp-validation-for="Amount"
+                                          class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <hr class="my-4" />
+
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <a asp-action="Delete"
+                                   asp-route-id="@Model.Id"
+                                   class="btn btn-outline-danger">
+                                    Elimina spesa
+                                </a>
+
+                                <div class="d-flex gap-2">
+                                    <a asp-action="Index"
+                                       class="btn btn-outline-secondary">
+                                        Annulla
+                                    </a>
+
+                                    <button type="submit"
+                                            class="btn btn-primary">
+                                        Salva modifiche
+                                    </button>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Merchant" class="control-label"></label>
-                <input asp-for="Merchant" class="form-control" />
-                <span asp-validation-for="Merchant" class="text-danger"></span>
+
+            <div class="col-12 col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+
+                        <h2 class="h6 fw-bold">
+                            Modifica del movimento
+                        </h2>
+
+                        <p class="text-muted small mb-0">
+                            Le modifiche aggiorneranno la spesa
+                            esistente e la sua ripartizione,
+                            senza creare un nuovo movimento.
+                        </p>
+
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="OccurredOn" class="control-label"></label>
-                <input asp-for="OccurredOn" class="form-control" />
-                <span asp-validation-for="OccurredOn" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Allocations" class="control-label"></label>
-                <input asp-for="Allocations" class="form-control" />
-                <span asp-validation-for="Allocations" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

@@ -1,4 +1,5 @@
-﻿namespace ExpenseTracker.ViewModels
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+namespace ExpenseTracker.ViewModels
 {
     public class CreateExpenseViewModel
     {
@@ -8,5 +9,7 @@
 
         public int CategoryId { get; set; }
         public decimal Amount { get; set; }
+
+        public List<SelectListItem> Categories { get; set; } = new();
     }
 }

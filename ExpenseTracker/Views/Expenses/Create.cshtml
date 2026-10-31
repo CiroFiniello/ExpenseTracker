@@ -118,10 +118,9 @@
                                     </label>
 
                                     <select asp-for="CategoryId"
+                                            asp-items="Model.Categories"
                                             class="form-select">
-                                        <option value="">
-                                            Seleziona categoria
-                                        </option>
+                                        <option value="">Seleziona categoria</option>
                                     </select>
 
                                     <span asp-validation-for="CategoryId"
@@ -166,7 +165,6 @@
 
                                 <button type="submit"
                                         class="btn btn-primary"
-                                        disabled
                                         title="Attiveremo il salvataggio dopo aver collegato categoria e POST">
                                     Salva spesa
                                 </button>

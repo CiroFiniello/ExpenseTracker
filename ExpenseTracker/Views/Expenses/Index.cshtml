@@ -1,53 +1,141 @@
 @model IEnumerable<ExpenseTracker.Models.Expense>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Le mie spese";
 }
 
-<h1>Index</h1>
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Merchant)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.OccurredOn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Allocations)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(model => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Merchant)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.OccurredOn)
-            </td>
-            <td>
-                @Html.DisplayFor(model => item.Allocations)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+        <!-- Header -->
+        <div class="d-flex flex-wrap align-items-center
+            justify-content-between gap-3 mb-4">
+
+            <div>
+                <h1 class="fw-bold mb-2">Le mie spese</h1>
+                <p class="text-muted mb-0">
+                    Visualizza e gestisci i tuoi movimenti.
+                </p>
+            </div>
+
+            <a asp-action="Create"
+               class="btn btn-primary">
+                + Nuova spesa
+            </a>
+        </div>
+
+        <!-- Expense list -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4 py-3">Descrizione</th>
+                                <th class="py-3">Esercente</th>
+                                <th class="py-3">Data</th>
+                                <th class="py-3">Ripartizione</th>
+                                <th class="py-3 text-end">Totale</th>
+                                <th class="pe-4 py-3 text-end">Azioni</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var total = item.Allocations.Sum(a => a.Amount);
+
+                                <tr>
+                                    <td class="ps-4">
+                                        <span class="fw-semibold">
+                                            @item.Description
+                                        </span>
+                                    </td>
+
+                                    <td>@item.Merchant</td>
+
+                                    <td class="text-muted">
+                                        @item.OccurredOn.ToString("dd/MM/yyyy")
+                                    </td>
+
+                                    <td>
+                                        @if (item.Allocations.Any())
+                                        {
+                                            @foreach (var allocation in item.Allocations)
+                                            {
+                                                <div class="small mb-1">
+                                                    <span class="badge bg-light
+                                                        text-dark border">
+                                                        @allocation.Category.Name
+                                                    </span>
+
+                                                    <span class="text-muted ms-1">
+                                                        @allocation.Amount.ToString("N2") €
+                                                    </span>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-end fw-bold">
+                                        @total.ToString("N2") €
+                                    </td>
+
+                                    <td class="pe-4 text-end">
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <a asp-action="Details"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-secondary">
+                                                Dettagli
+                                            </a>
+
+                                            <a asp-action="Edit"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Modifica
+                                            </a>
+
+                                            <a asp-action="Delete"
+                                               asp-route-id="@item.Id"
+                                               class="btn btn-sm btn-outline-danger">
+                                                Elimina
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <p class="fw-semibold mb-1">
+                                            Nessuna spesa registrata
+                                        </p>
+
+                                        <p class="text-muted small mb-3">
+                                            Inizia aggiungendo il tuo primo movimento.
+                                        </p>
+
+                                        <a asp-action="Create"
+                                           class="btn btn-primary">
+                                            Aggiungi una spesa
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
