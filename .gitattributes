@@ -61,3 +61,9 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Esclude le librerie frontend di terze parti dalle statistiche
+**/wwwroot/lib/** linguist-vendored
+
+# Esclude le viste Razor dalle statistiche dei linguaggi
+**/*.cshtml -linguist-detectable
